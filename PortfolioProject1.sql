@@ -42,14 +42,6 @@ order by TotalDeathCount desc
 
 
 
-Select date, sum(new_cases) as total_cases, sum(cast(new_deaths as int)) as total_deaths, sum(cast(new_deaths as int))/sum(new_cases)*100 as death_percentage
-From PortfolioProject..CovidDeaths
---where location like '%nigeria%'
-where continent is not null
-group by date
-order by 1,2
-
-
 select dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations
 , SUM(CONVERT(bigint,vac.new_vaccinations)) OVER (Partition by dea.Location order by dea.location, dea.date) as RollingPeopleVaccinated
 from PortfolioProject..CovidDeaths dea
@@ -60,7 +52,44 @@ where dea.continent is not null
 order by 2,3
 
 
+-- USING CTE
+With PopvsVac (Continent, Location, Date, Population,New_Vaccinations, RollingPeopleVaccinated)
+as
+(
+select dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations
+, SUM(CONVERT(bigint,vac.new_vaccinations)) OVER (Partition by dea.Location order by dea.location, dea.date) as RollingPeopleVaccinated
+from PortfolioProject..CovidDeaths dea
+join PortfolioProject..CovidVaccinations vac
+	on dea.location = vac.location
+	and dea.date = vac.date
+where dea.continent is not null
+--order by 2,3
+)
+
+select *, (RollingPeopleVaccinated/Population)*100 as VaccinatedPopulationPercentage
+from PopvsVac
 
 
+--TEMP TABLE
 
+CREATE TABLE #PopulationVaccinated
+(
+Continent nvarchar(255),
+Location nvarchar(255),
+Date datetime,
+Population bigint,
+New_Vaccinations numeric,
+RollingPeopleVaccinated numeric,
+)
 
+INSERT INTO #PopulationVaccinated
+select dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations
+, SUM(CONVERT(bigint,vac.new_vaccinations)) OVER (Partition by dea.Location order by dea.location, dea.date) as RollingPeopleVaccinated
+from PortfolioProject..CovidDeaths dea
+join PortfolioProject..CovidVaccinations vac
+	on dea.location = vac.location
+	and dea.date = vac.date
+where dea.continent is not null
+
+Select *
+From #PopulationVaccinated
