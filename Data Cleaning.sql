@@ -101,5 +101,31 @@ Add OwnerSplitAddress nvarchar(255);
 update Housing
 set OwnerSplitAddress = parsename(replace(OwnerAddress, ',','.'), 3)
 
-select *
+
+
+-- Changing Y or N in the SoldAsVacant column to Yes and No
+
+select distinct(SoldAsVacant), count(SoldAsVacant)
 from PortfolioProject..Housing
+group by SoldAsVacant
+order by 2
+
+
+
+select SoldAsVacant,
+case when SoldAsVacant = 'Y' then 'Yes'
+	 when SoldAsVacant = 'N' then 'No'
+	 else SoldAsVacant
+end
+from PortfolioProject..Housing
+
+
+update Housing
+set SoldAsVacant = case when SoldAsVacant = 'Y' then 'Yes'
+	 when SoldAsVacant = 'N' then 'No'
+	 else SoldAsVacant
+end
+
+
+
+-- Removing Duplicates
