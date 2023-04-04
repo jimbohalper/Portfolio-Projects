@@ -129,3 +129,22 @@ end
 
 
 -- Removing Duplicates
+
+With RowNumCTE AS(
+Select *,
+	ROW_NUMBER() over (
+	partition by ParcelId,
+				 PropertyAddress,
+				 SalePrice,
+				 SaleDate,
+				 LegalReference
+				 Order By
+					UniqueID
+					) row_num
+from PortfolioProject..Housing
+)
+
+Select *
+from RowNumCTE
+where row_num > 1
+--order by PropertyAddress
